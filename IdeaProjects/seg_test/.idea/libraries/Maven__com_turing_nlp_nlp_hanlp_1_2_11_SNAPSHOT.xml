@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.turing.nlp:nlp-hanlp:1.2.11-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/turing/nlp/nlp-hanlp/1.2.11-SNAPSHOT/nlp-hanlp-1.2.11-20170118.113040-44.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/turing/nlp/nlp-hanlp/1.2.11-SNAPSHOT/nlp-hanlp-1.2.11-20170118.113040-44-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/turing/nlp/nlp-hanlp/1.2.11-SNAPSHOT/nlp-hanlp-1.2.11-20170118.113040-44-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.turing.nlp:turing-semantic-api:1.0-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/turing/nlp/turing-semantic-api/1.0-SNAPSHOT/turing-semantic-api-1.0-20161216.063648-8.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/turing/nlp/turing-semantic-api/1.0-SNAPSHOT/turing-semantic-api-1.0-20161216.063648-8-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/turing/nlp/turing-semantic-api/1.0-SNAPSHOT/turing-semantic-api-1.0-20161216.063648-8-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

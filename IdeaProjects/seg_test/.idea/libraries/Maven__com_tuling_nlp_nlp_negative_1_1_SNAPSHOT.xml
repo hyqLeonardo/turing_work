@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.tuling.nlp:nlp-negative:1.1-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/tuling/nlp/nlp-negative/1.1-SNAPSHOT/nlp-negative-1.1-20161028.131439-105.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/tuling/nlp/nlp-negative/1.1-SNAPSHOT/nlp-negative-1.1-20161028.131439-105-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/tuling/nlp/nlp-negative/1.1-SNAPSHOT/nlp-negative-1.1-20161028.131439-105-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
