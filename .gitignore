@@ -1,0 +1,10 @@
+# Resources files #
+###################
+*.txt
+*.xlsx
+*.pdf
+*.html
+
+# Other file #
+###################
+.tar.gz
