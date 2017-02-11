@@ -58,6 +58,26 @@ iqiyi_options = {1    :   iqiyi_movie_export,
 }
 
 
+### ########################
+# configure IqiyiLib export behaviour
+###########################
+iqiyilib_movie_w = open('iqiyilib_movie.txt', 'w')
+iqiyilib_tv_w = open('iqiyilib_tv.txt', 'w')
+iqiyilib_cartoon_w = open('iqiyilib_cartoon.txt', 'w')
+
+def iqiyilib_movie_export(item):
+    iqiyilib_movie_w.write(item.encode("utf-8").strip() + '\n')
+
+def iqiyilib_tv_export(item):
+    iqiyilib_tv_w.write(item.encode("utf-8").strip() + '\n')
+
+def iqiyilib_cartoon_export(item):
+    iqiyilib_cartoon_w.write(item.encode("utf-8").strip() + '\n')
+
+iqiyilib_options = {0    :   iqiyilib_movie_export,
+                    1  :   iqiyilib_tv_export,
+                    2   :   iqiyilib_cartoon_export,
+}
 
 ### ########################
 # configure Tencent export behaviour
@@ -115,6 +135,29 @@ funtv_options = {0    :   funtv_movie_export,
                     3   :   funtv_cartoon_export,
                     4   :   funtv_show_export,
 }
+
+### ########################
+# configure Zaizai export behaviour
+###########################
+zaizai_movie_w = open('zaizai_movie.txt', 'w')
+zaizai_tv_w = open('zaizai_tv.txt', 'w')
+zaizai_cartoon_w = open('zaizai_cartoon.txt', 'w')
+
+def zaizai_movie_export(item):
+    zaizai_movie_w.write(item.encode("utf-8").strip() + '\n')
+
+def zaizai_tv_export(item):
+    zaizai_tv_w.write(item.encode("utf-8").strip() + '\n')
+
+def zaizai_cartoon_export(item):
+    zaizai_cartoon_w.write(item.encode("utf-8").strip() + '\n')
+
+zaizai_options = dict()
+for i in range(6):
+    zaizai_options[i] = zaizai_movie_export
+for i in range(6, 13):
+    zaizai_options[i] = zaizai_tv_export
+zaizai_options[13] = zaizai_cartoon_export
 
 ### ########################
 # configure 2345(Essw) export behaviour
@@ -184,19 +227,19 @@ class IqiyiSpider(scrapy.Spider):
     type_count = 0
     # start page is 1 
     page = 1
+    page_bound = 30 # no more than 30 pages each
     start_urls = [base_url %(iqiyi_type, page)]   # process.start() begin from here
     download_delay = 1.5
 
     def parse(self, response):
 
         names = Selector(text=response.body) \
-                .xpath('//div[@class="page-list"]//div//div//div[@class="wrapper-cols"] \
-                //div//li//div[@class="site-piclist_info"]//a/text()').extract()
+                .xpath('/html/body/div[4]/div/div/div[3]/div/ul/li/div[2]/div[1]/p/a/text()').extract()
         # write movie names into file
         for item in names: 
             iqiyi_options[self.iqiyi_type](item)
         # continue to fetch if has next page (Iqiyi has no more than 30  pages in each type)
-        if self.page < 30:
+        if self.page < self.page_bound:
             self.page = self.page + 1   # next page
             yield scrapy.Request(self.base_url %(self.iqiyi_type, self.page))
         elif self.type_count < len(self.iqiyi_type_list)-1:
@@ -204,6 +247,40 @@ class IqiyiSpider(scrapy.Spider):
             self.iqiyi_type = self.iqiyi_type_list[self.type_count] # set type number
             self.page = 1   # reset to start page
             yield scrapy.Request(self.base_url %(self.iqiyi_type, self.page))
+
+### ########################
+# IqiyiLib Spider Class
+###########################
+class IqiyilibSpider(scrapy.Spider):
+    name = 'spidyiqiyilib'
+    base_url = 'http://www.iqiyi.com/lib/%s/%%2C%%2C_11_%s.html'
+    # types
+    iqiyilib_type_list = ['dianying', 'dianshiju', 'dongman']
+    iqiyilib_type = iqiyilib_type_list[0]  # initial type
+    type_count = 0
+    # start page is 1 
+    page = 1
+    page_bound = 100    # all types have 100 pages
+    start_urls = [base_url %(iqiyilib_type, page)]   # process.start() begin from here
+    download_delay = 1.5
+
+    def parse(self, response):
+
+        names = Selector(text=response.body) \
+                .xpath('/html/body/div[2]/div[5]/div/div[2]/div/ul/li/div[2]/div[1]/p/a/text()').extract()
+        # write movie names into file
+        for item in names: 
+            iqiyilib_options[self.type_count](item)
+        # page loop
+        if self.page < self.page_bound:
+            self.page = self.page + 1   # next page
+            yield scrapy.Request(self.base_url %(self.iqiyilib_type, self.page))
+        # type loop
+        elif self.type_count < len(self.iqiyilib_type_list)-1:
+            self.type_count = self.type_count + 1 # next type
+            self.iqiyilib_type = self.iqiyilib_type_list[self.type_count] # set type number
+            self.page = 1   # reset to start page
+            yield scrapy.Request(self.base_url %(self.iqiyilib_type, self.page))
 
 ### ########################
 # Tencent Spider Class
@@ -271,6 +348,45 @@ class FuntvSpider(scrapy.Spider):
             yield scrapy.Request(self.base_url %(self.funtv_type, self.page))
 
 ### ########################
+# Zaizai Spider Class
+###########################
+class ZaizaiSpider(scrapy.Spider):
+    name = 'spidyiqzaizai'
+    handle_httpstatus_list = [404]  # necessary to handle 404
+    base_url = 'http://www.zaizai8.com/%s/index%s.html'
+    # types : movie 0-5, tv 6-12, cartoon 13
+    zaizai_type_list = ['xj', 'dz', 'aq', 'kh', 'kb', 'jq', 'gc', 'tvb', 'tw', 'hg', 'riben', 'om', 'tg', 'dh']
+    zaizai_type = zaizai_type_list[0]  # initial type
+    type_count = 0
+    # start page is 1 
+    page = 1
+    page_bound = 700    # max 700 pages
+    start_urls = [base_url %(zaizai_type, page)]   # process.start() begin from here
+    download_delay = 1.5
+
+    def parse(self, response):
+
+        print response.body
+        names = Selector(text=response.body) \
+                        .xpath('/html/body/metaname/div[4]/div[1]/ul/li/a/span[2]/p[1]/text()').extract()
+        # write movie names into file
+        for item in names:
+            # print item.encode("utf-8") 
+            zaizai_options[self.type_count](item)
+        # page loop
+        if self.page < self.page_bound:
+            # if response.status is 404: # handle 404 error
+            #     pass
+            self.page = self.page + 1   # next page
+            yield scrapy.Request(self.base_url %(self.zaizai_type, self.page), encoding="gb2312")
+        # type loop
+        elif self.type_count < len(self.zaizai_type_list)-1:
+            self.type_count = self.type_count + 1 # next type
+            self.zaizai_type = self.zaizai_type_list[self.type_count] # set type number
+            self.page = 1   # reset to start page
+            yield scrapy.Request(self.base_url %(self.zaizai_type, self.page), encoding="gb2312")
+
+### ########################
 # 2345(essw) Spider Class
 ###########################
 class EsswSpider(scrapy.Spider):
@@ -313,7 +429,7 @@ class EsswSpider(scrapy.Spider):
                 self.page = self.page + 1  # next page
                 yield scrapy.Request(self.base_url % self.page)
             else:
-                print "holy god, what happened?"
+                print "holy god, what now?"
         elif self.url_count < len(self.urls)-1:
             self.url_count = self.url_count + 1 # next url
             self.base_url = self.urls[self.url_count] # reset url
@@ -324,7 +440,7 @@ if __name__=="__main__":
 
     process = CrawlerProcess()
 
-    process.crawl(EsswSpider)
+    process.crawl(ZaizaiSpider)
     process.start()
 
     pptv_movie_w.close()
