@@ -2,7 +2,8 @@
 
 import os
 import sys
-import trace
+
+import pdb
 
 CHINESE_NUM_LEN = 3
 ARABIC_NUM_LEN = 1
@@ -51,7 +52,8 @@ def get_num_type(char, list_num=list_num_all):
 # write all item in record into file f_w
 def write_record(f_w, record):
 	for name in record:
-		f_w.write(name)
+		name_no_space = "".join(name.split())
+		f_w.write(name_no_space + '\n')
 
 ### Colon
 
@@ -125,10 +127,39 @@ def num_replace_record(name, record):
 	list_number = [arabic_num, chinese_num]
 	replace_record(num_replace, (name, list_number), record)
 
+'''recursively replace and expand all 'number meaning' characters, 
+	implemented by callback function, 
+	num_recursive_record -> num_recursive -> num_recursive_record'''
+def num_recursive(name, list_number, num_result=list()):
+
+	# don't replace if has year number
+	if sum([year in name for year in year_num]) > 0:
+		return [name]
+	if sum([char in name for char in all_num]) <= 0:
+		return [name]
+
+	(n, list_n) = get_num_type(name)
+	# ONLY replace if it's the last character
+	if is_last(name, list_n[n]):
+		char_replace = list_n[n]
+		num_result.extend(expand_num(name, n, char_replace, list_number))	# expand current
+		if n > 1:	# recursively expand with number less than current, bigger than 1
+			recur_name = name.replace(char_replace, list_n[n-1])	# decrease 1
+			num_recursive(recur_name, list_number, num_result)	
+	else:
+		return [name]
+
+	return num_result
+
+def num_recursive_record(name, record):
+	list_number = [arabic_num, chinese_num]
+	replace_record(num_recursive, (name, list_number), record)
+
+
 ### Season
 
 # replace and expand season phrase
-def season_replace(name):
+def season_replace(name, record, recursive=False):
 
 	season_result = list()
 	list_season_num = [arabic_num, chinese_num]
@@ -153,22 +184,29 @@ def season_replace(name):
 		first_part = char_replace[:4]
 		second_part = char_replace[4:]
 	list_num_a_c = [arabic_num, chinese_num]
-	replace_part_list = num_replace(first_part, list_num_a_c)
+	if recursive == False:	# no recursively expand
+		replace_part_list = num_replace(first_part, list_num_a_c)
+	else:	# recursively expand, use num_recursive
+		replace_part_list = num_recursive(first_part, list_num_a_c)
 	replace_list = [first + second_part for first in replace_part_list]
 
 	# expand space
 	for r in replace_list:
-		if ' '+char in name:	# has space in front
-			season_result.append(name.replace(' '+char, r))
-		else:
-			season_result.append(name.replace(char, ' '+r))
+		season_result.append(name.replace(char, r))
 
 	return season_result
 
 def season_replace_record(name, record):
 	'''do NOT remove the ',' in (name, ), or *args won't be able to 
 		unwrap this as a tuple, instead unwrap the string'''
-	replace_record(season_replace, (name, ), record)
+	replace_record(season_replace, (name, record, False), record)
+	num_result = list()
+	season_result = list()
+
+def season_recursive_record(name, record):
+	'''do NOT remove the ',' in (name, ), or *args won't be able to 
+		unwrap this as a tuple, instead unwrap the string'''
+	replace_record(season_replace, (name, record, True), record)
 	num_result = list()
 	season_result = list()
 
@@ -176,9 +214,14 @@ def season_replace_record(name, record):
 
 # expand all avaliable chars
 def expand_record(name, record):
-	# the order matters
 	season_replace_record(name, record)
 	num_replace_record(name, record)
+	colon_replace_record(name, record)
+
+# expand with recursive number replace
+def recursive_expand_record(name, record):
+	season_recursive_record(name, record)
+	num_recursive_record(name, record)
 	colon_replace_record(name, record)
 
 
@@ -191,6 +234,7 @@ def main():
 	dict_record = dict()
 	record = dict_record
 	# result merged file
+	f_recursive_expand_w = open('merged_recursive', 'w')
 	f_expand_w = open('merged_expand', 'w')
 	f_unique_w = open('merged', 'w')
 	# get list of all txt files in current directory
@@ -203,11 +247,14 @@ def main():
 				%(file, len(record), sys.getsizeof(record))
 		with open(file) as f_r:
 			for name in f_r:
-				expand_record(name, record)
+				recursive_expand_record(name, record)
+				# expand_record(name, record)
 				# unique_record([name], record)
 		f_r.close()
 
-	write_record(f_expand_w, record)
+	write_record(f_recursive_expand_w, record)
+	f_recursive_expand_w.close()
+	# write_record(f_expand_w, record)
 	f_expand_w.close()
 	# write_record(f_unique_record, record)
 	f_unique_w.close()
@@ -220,21 +267,25 @@ def main():
 def test_line():
 
 	# modify this to change storage data structure
-	list_record = list() 
+	# list_record = list() 
 	dict_record = dict()
 	record = dict_record
 	# setup
-	line = '少年师爷:侠义欢乐行第二季'
+	line = '少年师爷第9季'
 	test_w = open('test', 'w')
 	# print result	
 	list_number = [arabic_num, chinese_num]
 	# res = num_replace(line, list_number)
+	# res = num_recursive(line, list_number)
 	# res = colon_replace(line)
-	res = season_replace(line)
+	# res = season_replace(line)
+	res = season_replace(line, record, True)
 	for i in range(len(res)):
 		print res[i]
 	# write result
-	expand_record(line, test_w, record)
+	# expand_record(line, test_w, record)
+	recursive_expand_record(line, record)
+	write_record(test_w, record)
 	test_w.close()
 
 # test by one file
@@ -247,19 +298,25 @@ def test_file():
 	# file setup
 	f_unique_w = open('merged_test', 'w')
 	f_expand_w = open('merged_expand_test', 'w')
+	f_recursive_w = open('merged_recursive_test', 'w')
 
 	count_lines = 0
-	file = 'funtv_cartoon.txt'
+	file = 'file_for_test'
 	with open(file) as f_r:
 		for name in f_r:
 			count_lines += 1
+			# name = "".join(name.split())	# remove all white spaces
 			# unique_record([name], f_unique_record, record, verbose=False)
-			expand_record(name, record)
+			# expand_record(name, record)
+			recursive_expand_record(name, record)
+
 	f_r.close()
 	# write_record(f_unique_w, record)
 	f_unique_w.close()
-	write_record(f_expand_w, record)
+	# write_record(f_expand_w, record)
 	f_expand_w.close()
+	write_record(f_recursive_w, record)
+	f_recursive_w.close()
 
 	print 'totally %i lines in file %s, %i keys in record with size of %i bytes' \
 			%(count_lines, file, len(record), sys.getsizeof(record))
@@ -267,7 +324,7 @@ def test_file():
 
 if __name__ == "__main__":
 
-	main()
+	# main()
 	# test_line()
-	# test_file()
+	test_file()
 
